@@ -17,7 +17,7 @@ function action_data()
     local state = json.parse(util.exec("cat /etc/sing-box/state.json 2>/dev/null") or "{}") or {}
     local active_tag = state.active_tag or ""
     local is_sing = (util.exec("pgrep sing-box") ~= "")
-    local handshake = tonumber(util.exec("awg-new show awg0 latest-handshakes 2>/dev/null | awk '{print $NF}'") or "0") or 0
+    local handshake = tonumber(util.exec("awg show awg0 latest-handshakes 2>/dev/null | awk '{print $NF}'") or "0") or 0
     local is_awg = (handshake > 0)
     local rx, tx = "0", "0"
     if is_sing then rx = util.exec("cat /sys/class/net/tun-shuka/statistics/rx_bytes 2>/dev/null"); tx = util.exec("cat /sys/class/net/tun-shuka/statistics/tx_bytes 2>/dev/null")

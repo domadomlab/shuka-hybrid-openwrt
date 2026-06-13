@@ -6,7 +6,7 @@ logger -t awg-stop "Stopping AmneziaWG and restoring network..."
 ip route del 0.0.0.0/1 dev $IFACE 2>/dev/null
 ip route del 128.0.0.0/1 dev $IFACE 2>/dev/null
 # Удаляем маршрут к серверу, чтобы вернуть его на дефолтный шлюз
-ENDPOINT_IP=$(awg-new show $IFACE endpoint 2>/dev/null | awk '{print $2}' | cut -d: -f1)
+ENDPOINT_IP=$(awg show $IFACE endpoint 2>/dev/null | awk '{print $2}' | cut -d: -f1)
 if [ -n "$ENDPOINT_IP" ]; then
     ip route del $ENDPOINT_IP 2>/dev/null
 fi

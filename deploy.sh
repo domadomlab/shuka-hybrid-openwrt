@@ -15,7 +15,7 @@ sshpass -p "$ROUTER_PASS" ssh -o StrictHostKeyChecking=no root@$ROUTER_IP << 'EO
     mkdir -p /usr/bin /etc/init.d /etc/amneziawg/profiles /etc/sing-box /usr/lib/lua/luci/controller
 EOR
 
-for f in amneziawg-go awg-new sing-box; do sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /usr/bin/$f" < "$DIR/bin/$f"; done
+for f in amneziawg-go awg sing-box; do sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /usr/bin/$f" < "$DIR/bin/$f"; done
 for f in shuka_manager.py internet-protection.sh amneziawg-stop.sh start_shuka.sh amneziawg-dns.sh; do sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /usr/bin/$f" < "$DIR/scripts/$f"; done
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/init.d/internet-protection" < "$DIR/init/internet-protection.init"
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/init.d/shuka-boot" < "$DIR/init/shuka-boot.init"
