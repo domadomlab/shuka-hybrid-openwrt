@@ -19,6 +19,9 @@ def load_json(path):
 def save_json(path, data):
     with open(path, 'w') as f: json.dump(data, f, indent=2, ensure_ascii=False)
 
+def set_state(tag, engine):
+    save_json(STATE_FILE, {"active_tag": tag, "engine": engine})
+
 def stop_all():
     os.system("killall sing-box 2>/dev/null")
     os.system("ip link delete awg0 2>/dev/null")
@@ -36,14 +39,49 @@ def parse_link(link):
             pars = dict(urllib.parse.parse_qsl(pa))
             out = {"type":"vless","tag":tag,"server":h,"server_port":int(p),"uuid":u,"tls":{"enabled":True,"server_name":pars.get("sni",""),"utls":{"enabled":True,"fingerprint":"chrome"}}}
             if pars.get("security") == "reality": out["tls"]["reality"] = {"enabled":True,"public_key":pars.get("pbk",""),"short_id":pars.get("sid","")}
+            if pars.get("flow"): out["flow"] = pars.get("flow")
             return out
     except: pass
     return None
 
+def apply_fw(iface):
+    os.system(f"iptables -I FORWARD -i br-lan -o {iface} -j ACCEPT 2>/dev/null")
+    os.system(f"iptables -I FORWARD -i {iface} -o br-lan -j ACCEPT 2>/dev/null")
+    os.system(f"iptables -t nat -I POSTROUTING -o {iface} -j MASQUERADE 2>/dev/null")
+
+def select_server(tag):
+    if not tag: return
+    os.system("touch " + CONN_FLAG)
+    tag_clean = tag.replace(".conf", "")
+    conf_path = AMNEZIA_PROFILES + tag_clean + ".conf"
+    
+    if os.path.exists(conf_path):
+        stop_all()
+        os.system("ip link add dev awg0 type amneziawg")
+        os.system("cp '" + conf_path + "' /etc/amneziawg/awg0.conf")
+        os.system("/usr/bin/start_shuka.sh &")
+        set_state(tag_clean, "amneziawg")
+    else:
+        c = load_json(CONFIG_PATH)
+        if "route" in c and "rules" in c["route"]:
+            for r in c["route"]["rules"]:
+                if r.get("action") == "hijack-dns": continue
+                if r.get("outbound") not in ["direct","dns-out","block","any"]: r["outbound"] = tag
+        if "dns" in c and "servers" in c["dns"]:
+            for s in c["dns"]["servers"]:
+                # Исправляем detour, чтобы он указывал на тег сервера, а не на слово proxy
+                if s.get("tag") == "dns-proxy": s["detour"] = tag
+        save_json(CONFIG_PATH, c)
+        stop_all()
+        cmd = "export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true; export ENABLE_DEPRECATED_OUTBOUND_DNS_RULE_ITEM=true; export ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER=true; /usr/bin/sing-box run -c /etc/sing-box/config.json &"
+        os.system(cmd)
+        apply_fw("tun-shuka")
+        set_state(tag, "sing-box")
+    os.system("(sleep 15 && rm -f " + CONN_FLAG + ") &")
+
 def main():
     if len(sys.argv) < 2: return
     cmd = sys.argv[1]
-    
     if cmd == "sync":
         os.system("touch " + SYNC_FLAG)
         try:
@@ -64,61 +102,30 @@ def main():
                     cfg["outbounds"] = obs + [o for o in cfg.get("outbounds",[]) if o["type"] not in ["vless"]]
                     save_json(CONFIG_PATH, cfg)
         finally:
-            time.sleep(15)
+            time.sleep(1)
             os.system("rm -f " + SYNC_FLAG)
-            
-    elif cmd == "select":
-        tag = sys.argv[2]
-        os.system("touch " + CONN_FLAG)
-        if os.path.exists(AMNEZIA_PROFILES + tag + ".conf"):
-            stop_all()
-            os.system("ip link add dev awg0 type amneziawg")
-            os.system("cp '" + AMNEZIA_PROFILES + tag + ".conf' /etc/amneziawg/awg0.conf")
-            os.system("/usr/bin/start_shuka.sh &")
-            save_json(STATE_FILE, {"active_tag": tag, "engine": "amneziawg"})
-        else:
-            c = load_json(CONFIG_PATH)
-            if "route" in c and "rules" in c["route"]:
-                for r in c["route"]["rules"]:
-                    if "outbound" in r and r["outbound"] not in ["direct","block","dns-out","any"]: r["outbound"] = tag
-            save_json(CONFIG_PATH, c)
-            stop_all()
-            os.system("export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true; /usr/bin/sing-box run -c /etc/sing-box/config.json &")
-            save_json(STATE_FILE, {"active_tag": tag, "engine": "sing-box"})
-        os.system("(sleep 15 && rm -f " + CONN_FLAG + ") &")
-
-    elif cmd == "stop":
-        stop_all()
-        save_json(STATE_FILE, {"active_tag": "", "engine": "none"})
-        
+    elif cmd == "select": select_server(sys.argv[2])
+    elif cmd == "stop": stop_all(); set_state("", "none"); os.system("rm -f " + CONN_FLAG)
     elif cmd == "start":
-        st = load_json(STATE_FILE)
-        if st.get("active_tag"):
-            # Вызываем саму программу с командой select
-            os.system(f"/usr/bin/python3 /usr/bin/shuka_manager.py select '{st['active_tag']}'")
-            
+        state = load_json(STATE_FILE)
+        if state.get("active_tag"): select_server(state["active_tag"])
     elif cmd == "amnezia":
         path = sys.argv[2]
         if os.path.exists(path):
             name = "Imported-" + base64.b32encode(os.urandom(2)).decode().strip("=")
             if not os.path.exists(AMNEZIA_PROFILES): os.makedirs(AMNEZIA_PROFILES)
             os.system(f"cp '{path}' '{AMNEZIA_PROFILES}{name}.conf'")
-            
     elif cmd == "del_amnezia":
         tag = sys.argv[2]
         path = AMNEZIA_PROFILES + tag + ".conf"
         if os.path.exists(path):
             os.remove(path)
             st = load_json(STATE_FILE)
-            if st.get("active_tag") == tag:
-                stop_all()
-                save_json(STATE_FILE, {"active_tag": "", "engine": "none"})
-                
+            if st.get("active_tag") == tag: stop_all(); set_state("", "none")
     elif cmd == "clear_sub":
         if os.path.exists(SUB_URL_FILE): os.remove(SUB_URL_FILE)
         cfg = load_json(TEMPLATE_PATH)
         save_json(CONFIG_PATH, cfg)
-        stop_all()
-        save_json(STATE_FILE, {"active_tag": "", "engine": "none"})
+        stop_all(); set_state("", "none")
 
 if __name__ == "__main__": main()
