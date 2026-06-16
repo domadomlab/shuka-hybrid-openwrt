@@ -21,9 +21,10 @@ sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/init.d/internet-protec
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/init.d/shuka-boot" < "$DIR/init/shuka-boot.init"
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /usr/lib/lua/luci/controller/shuka_hybrid.lua" < "$DIR/luci/shuka_hybrid.lua"
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/sing-box/config.json.template" < "$DIR/config.json.template"
+sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP "cat > /etc/hotplug.d/iface/98-shuka-modem-vpn" < "$DIR/hotplug/98-shuka-modem-vpn"
 
 sshpass -p "$ROUTER_PASS" ssh root@$ROUTER_IP << 'EOR'
-    chmod +x /usr/bin/* && chmod +x /etc/init.d/*
+    chmod +x /usr/bin/* && chmod +x /etc/init.d/* && chmod +x /etc/hotplug.d/iface/*
     /etc/init.d/internet-protection enable && /etc/init.d/internet-protection start
     /etc/init.d/shuka-boot enable
     rm -f /tmp/luci-indexcache && /etc/init.d/uhttpd restart

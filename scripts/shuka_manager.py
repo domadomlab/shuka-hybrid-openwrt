@@ -20,7 +20,12 @@ def save_json(path, data):
     with open(path, 'w') as f: json.dump(data, f, indent=2, ensure_ascii=False)
 
 def set_state(tag, engine):
-    save_json(STATE_FILE, {"active_tag": tag, "engine": engine})
+    state = load_json(STATE_FILE)
+    state["active_tag"] = tag
+    state["engine"] = engine
+    if tag:
+        state["last_active_tag"] = tag
+    save_json(STATE_FILE, state)
 
 def stop_all():
     os.system("killall sing-box 2>/dev/null")
@@ -107,8 +112,16 @@ def main():
     elif cmd == "select": select_server(sys.argv[2])
     elif cmd == "stop": stop_all(); set_state("", "none"); os.system("rm -f " + CONN_FLAG)
     elif cmd == "start":
+        if os.path.exists(CONN_FLAG): return
+        if os.path.exists("/sys/class/net/tun-shuka") or os.path.exists("/sys/class/net/awg0"): return
         state = load_json(STATE_FILE)
         if state.get("active_tag"): select_server(state["active_tag"])
+    elif cmd == "start_last":
+        if os.path.exists(CONN_FLAG): return
+        if os.path.exists("/sys/class/net/tun-shuka") or os.path.exists("/sys/class/net/awg0"): return
+        state = load_json(STATE_FILE)
+        tag = state.get("active_tag") or state.get("last_active_tag")
+        if tag: select_server(tag)
     elif cmd == "amnezia":
         path = sys.argv[2]
         if os.path.exists(path):

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Hotplug script to auto-start last active VPN when a mobile modem connects and gets internet
+. /lib/functions.sh
+
+case "$INTERFACE" in
+    *modem*|*MODEM*|wwan*|WWAN*)
+        if [ "$ACTION" = "ifup" ]; then
+            # Run in the background using nohup to avoid blocking hotplug and survive shell exit
+            nohup sh -c '
+                INTERFACE="$1"
+                DEVICE="$2"
+                logger -t shuka-hotplug "Interface $INTERFACE ($DEVICE) went up. Verifying internet connectivity..."
+                
+                # Try to ping hosts (up to 30 attempts, 1 second delay)
+                success=0
+                for i in $(seq 1 30); do
+                    if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1 || ping -c 1 -W 2 77.88.8.8 >/dev/null 2>&1; then
+                        success=1
+                        break
+                    fi
+                    sleep 1
+                done
+
+                if [ "$success" -eq 1 ]; then
+                    # Check if VPN is already running
+                    if ! ip link show awg0 >/dev/null 2>&1 && ! ip link show tun-shuka >/dev/null 2>&1; then
+                        logger -t shuka-hotplug "Internet connection is active. Restoring last active VPN profile..."
+                        /usr/bin/python3 /usr/bin/shuka_manager.py start_last
+                    else
+                        logger -t shuka-hotplug "Internet connection is active, but VPN interface is already up."
+                    fi
+                else
+                    logger -t shuka-hotplug "Timeout waiting for internet on $INTERFACE ($DEVICE)."
+                fi
+            ' sh "$INTERFACE" "$DEVICE" >/dev/null 2>&1 &
+        fi
+        ;;
+esac
