@@ -9,6 +9,7 @@ function index()
     entry({"admin", "services", "shuka", "delete"}, call("action_delete"), nil).leaf = true
     entry({"admin", "services", "shuka", "start"}, call("action_start"), nil).leaf = true
     entry({"admin", "services", "shuka", "stop"}, call("action_stop"), nil).leaf = true
+    entry({"admin", "services", "shuka", "rescue"}, call("action_rescue"), nil).leaf = true
     entry({"admin", "services", "shuka", "amnezia_upload"}, call("action_amnezia_upload"), nil).leaf = true
     entry({"admin", "services", "shuka", "autostart"}, call("action_autostart"), nil).leaf = true
 end
@@ -134,7 +135,10 @@ function action_gui()
                 <input type="text" id="url" style="width:100%; background:#0003; color:#fff; border:1px solid #334155; padding:10px; border-radius:6px;" value="]]..url..[[">
                 <!-- ВОТ ЗДЕСЬ ДОБАВЛЕН ВЫЗОВ DOSYNC() -->
                 <button id="sync-btn" class="btn btn-start" style="width:100%; margin-top:12px;" onclick="doSync()">REFRESH LIST</button>
-                <button class="btn btn-clear" onclick="if(confirm('Clear all?')) fetch(API + '/clear_sub').then(()=>update())">CLEAR ALL</button>
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <button class="btn btn-clear" onclick="if(confirm('Clear all?')) fetch(API + '/clear_sub').then(()=>update())">CLEAR ALL</button>
+                    <button class="btn btn-clear" style="border-color:#f59e0b; color:#f59e0b; background:#f59e0b20;" onclick="if(confirm('Сбросить все зависшие маршруты и DNS (Экстренное спасение)?')) fetch(API + '/rescue').then(()=>update())">🚨 СПАСЕНИЕ</button>
+                </div>
                 <div style="margin-top:20px; display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" id="autostart" style="transform:scale(1.2); cursor:pointer;" onchange="fetch(API + '/autostart?state=' + this.checked)">
                     <label for="autostart" style="cursor:pointer; font-size:13px; color:#cbd5e1;">Автозапуск VPN при загрузке роутера</label>
@@ -178,6 +182,12 @@ function action_autostart()
     else
         os.execute("/etc/init.d/shuka-boot disable")
     end
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({ok=true})
+end
+
+function action_rescue()
+    os.execute("/usr/bin/python3 /usr/bin/shuka_manager.py rescue &")
     luci.http.prepare_content("application/json")
     luci.http.write_json({ok=true})
 end
