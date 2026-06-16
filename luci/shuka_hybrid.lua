@@ -10,6 +10,7 @@ function index()
     entry({"admin", "services", "shuka", "start"}, call("action_start"), nil).leaf = true
     entry({"admin", "services", "shuka", "stop"}, call("action_stop"), nil).leaf = true
     entry({"admin", "services", "shuka", "amnezia_upload"}, call("action_amnezia_upload"), nil).leaf = true
+    entry({"admin", "services", "shuka", "autostart"}, call("action_autostart"), nil).leaf = true
 end
 
 local function read_f(p) local f=io.open(p,"r"); if f then local c=f:read("*all"); f:close(); return (c:gsub("%s+","")) end; return "0" end
@@ -26,8 +27,9 @@ function action_data()
     local cfg_raw = fs.readfile("/etc/sing-box/config.json"); local cfg = (cfg_raw and cfg_raw ~= "") and j.parse(cfg_raw) or {}
     if cfg and cfg.outbounds then for _, o in ipairs(cfg.outbounds) do if o.type=="vless" or o.type=="shadowsocks" then table.insert(srv,{tag=o.tag,type=o.type}) end end end
     for f in (fs.dir("/etc/amneziawg/profiles/") or function() end) do if f:match("%.conf$") then table.insert(srv,{tag=f:gsub("%.conf$",""),type="AWG"}) end end
+    local as_raw = u.exec("/etc/init.d/shuka-boot enabled >/dev/null 2>&1 && echo 1 || echo 0")
     h.prepare_content("application/json")
-    h.write_json({ rx=rx, tx=tx, ip=ip, servers=srv, active_tag=st.active_tag or "", is_running=(is_s or is_a), interface_up=(tonumber(rx or 0)>0), syncing=fs.access("/tmp/shuka_syncing") })
+    h.write_json({ rx=rx, tx=tx, ip=ip, servers=srv, active_tag=st.active_tag or "", is_running=(is_s or is_a), interface_up=(tonumber(rx or 0)>0), syncing=fs.access("/tmp/shuka_syncing"), autostart=(as_raw and as_raw:match("1")~=nil) })
 end
 
 function action_gui()
@@ -93,6 +95,8 @@ function action_gui()
                     btn.disabled = false; btn.innerHTML = 'REFRESH LIST'; 
                 }
 
+                document.getElementById('autostart').checked = d.autostart;
+
                 const list = document.getElementById('list'); list.innerHTML = '';
                 d.servers.forEach(s => {
                     const div = document.createElement('div'); div.className = 'item' + (s.tag === d.active_tag ? ' active' : '');
@@ -131,6 +135,10 @@ function action_gui()
                 <!-- ВОТ ЗДЕСЬ ДОБАВЛЕН ВЫЗОВ DOSYNC() -->
                 <button id="sync-btn" class="btn btn-start" style="width:100%; margin-top:12px;" onclick="doSync()">REFRESH LIST</button>
                 <button class="btn btn-clear" onclick="if(confirm('Clear all?')) fetch(API + '/clear_sub').then(()=>update())">CLEAR ALL</button>
+                <div style="margin-top:20px; display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="autostart" style="transform:scale(1.2); cursor:pointer;" onchange="fetch(API + '/autostart?state=' + this.checked)">
+                    <label for="autostart" style="cursor:pointer; font-size:13px; color:#cbd5e1;">Автозапуск VPN при загрузке роутера</label>
+                </div>
                 <h4 style="margin-top:25px;">IMPORT CONFIG</h4>
                 <form method="post" action="]]..base..[[/amnezia_upload" enctype="multipart/form-data"><input type="file" name="amneziadata" onchange="this.form.submit()"></form>
             </div>
@@ -161,4 +169,15 @@ function action_amnezia_upload()
     h.setfilehandler(function(m,c,e) if c then f:write(c) end if e then f:close() end end)
     h.formvalue("amneziadata"); os.execute("/usr/bin/python3 /usr/bin/shuka_manager.py amnezia "..tmp.." &")
     h.redirect(luci.dispatcher.build_url("admin", "services", "shuka"))
+end
+
+function action_autostart()
+    local s = luci.http.formvalue("state")
+    if s == "true" then
+        os.execute("/etc/init.d/shuka-boot enable")
+    else
+        os.execute("/etc/init.d/shuka-boot disable")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write_json({ok=true})
 end
