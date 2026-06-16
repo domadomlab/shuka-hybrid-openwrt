@@ -9,7 +9,7 @@ Features hybrid engine support: Native AmneziaWG Kernel Mode and Sing-box for su
 - **Smart DNS**: Integrated DoH (DNS over HTTPS) and bypass rules for local services.
 - **Internet Protection**: Aggressive watchdog that restores direct connectivity if VPN fails.
 - **Full LuCI Web Interface**: Manage subscriptions, import Amnezia profiles, and monitor traffic in real-time.
-- **Auto-start**: Restores last active connection after reboot.
+- **Auto-start**: Restores last active connection after reboot or when a mobile modem connects.
 
 ## Installation
 
@@ -18,7 +18,7 @@ Features hybrid engine support: Native AmneziaWG Kernel Mode and Sing-box for su
 2. Run:
    ```bash
    opkg update
-   opkg install luci-app-shuka-hybrid_2.5.0_LTS.ipk
+   opkg install amneziawg-shuka-suite_4.0.4_aarch64_cortex-a53.ipk
    ```
 
 ## Requirements
