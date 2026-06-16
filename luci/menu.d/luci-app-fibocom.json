@@ -1,0 +1,31 @@
+{
+    "admin/network/fibocom": {
+        "title": "Fibocom Modem",
+        "order": 99,
+        "action": {
+            "type": "template",
+            "path": "fibocom_status"
+        }
+    },
+    "admin/network/fibocom/data": {
+        "action": {
+            "type": "call",
+            "module": "luci.controller.fibocom",
+            "function": "action_data"
+        }
+    },
+    "admin/network/fibocom/set_band": {
+        "action": {
+            "type": "call",
+            "module": "luci.controller.fibocom",
+            "function": "action_set_band"
+        }
+    },
+    "admin/network/fibocom/at_cmd": {
+        "action": {
+            "type": "call",
+            "module": "luci.controller.fibocom",
+            "function": "action_at_cmd"
+        }
+    }
+}
