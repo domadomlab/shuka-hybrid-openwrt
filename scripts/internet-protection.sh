@@ -13,6 +13,8 @@ CHECK_HOSTS="8.8.8.8 1.1.1.1 9.9.9.9 77.88.8.8 77.88.8.1"
 
 log_event() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+    # Ограничиваем лог 500 строками для защиты флеш-памяти роутера
+    tail -n 500 "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
     logger -t internet-protection "$1"
 }
 
@@ -26,9 +28,9 @@ aggressive_rescue() {
     # 2. Удаляем интерфейс
     ip link delete awg0 2>/dev/null
     
-    # 3. Принудительная очистка маршрутов (всех возможных кусков)
-    while ip route del 0.0.0.0/1 2>/dev/null; do :; done
-    while ip route del 128.0.0.0/1 2>/dev/null; do :; done
+    # 3. Очистка маршрутов (максимум 3 итерации, защита от зависания)
+    for i in 1 2 3; do ip route del 0.0.0.0/1 2>/dev/null || break; done
+    for i in 1 2 3; do ip route del 128.0.0.0/1 2>/dev/null || break; done
     
     # Удаляем маршруты к VPN эндпоинтам
     ip route show | grep via | while read -r line; do
