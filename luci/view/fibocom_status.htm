@@ -1,0 +1,255 @@
+<%+header%>
+<style>
+    .fibocom-card {
+        background: #1e293b;
+        color: #f1f5f9;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #334155;
+    }
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+    .status-item {
+        background: #0f172a;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .signal-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 30px;
+        margin-bottom: 5px;
+    }
+    .bar {
+        width: 6px;
+        background: #334155;
+        border-radius: 1px;
+    }
+    .bar1 { height: 20%; }
+    .bar2 { height: 40%; }
+    .bar3 { height: 60%; }
+    .bar4 { height: 80%; }
+    .bar5 { height: 100%; }
+    .bar.active {
+        background: #38bdf8;
+        box-shadow: 0 0 8px #38bdf866;
+    }
+    .status-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #38bdf8;
+    }
+    .status-label {
+        font-size: 12px;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+    .band-checkboxes {
+        display: flex;
+        gap: 20px;
+        margin: 15px 0;
+    }
+    .band-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+    .terminal-window {
+        background: #000;
+        color: #0f0;
+        font-family: monospace;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        border-radius: 4px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+    }
+    .input-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    input[type="text"] {
+        flex-grow: 1;
+        background: #0f172a;
+        color: #fff;
+        border: 1px solid #334155;
+        padding: 8px;
+        border-radius: 4px;
+    }
+    .btn-apply {
+        background: #38bdf8;
+        color: #0f172a;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-apply:hover { background: #7dd3fc; }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .info-item {
+        background: #0f172a;
+        padding: 10px;
+        border-radius: 6px;
+        border-left: 3px solid #38bdf8;
+    }
+    .info-label {
+        font-size: 10px;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+    .info-value {
+        font-size: 14px;
+        font-weight: bold;
+        color: #f1f5f9;
+    }
+</style>
+
+<div class="fibocom-card">
+    <h2><span style="color:#38bdf8">Fibocom L850</span> Modem Management</h2>
+    
+    <div class="status-grid">
+        <div class="status-item">
+            <div class="signal-bars" id="signal-ladder">
+                <div class="bar bar1"></div>
+                <div class="bar bar2"></div>
+                <div class="bar bar3"></div>
+                <div class="bar bar4"></div>
+                <div class="bar bar5"></div>
+            </div>
+            <div id="csq-value" class="status-value">--</div>
+            <div class="status-label">Signal Quality (CSQ)</div>
+        </div>
+        <div class="status-item">
+            <div id="active-bands" class="status-value">--</div>
+            <div class="status-label">Active Bands</div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-label">Operator</div>
+            <div id="info-operator" class="info-value">--</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Network Mode</div>
+            <div id="info-mode" class="info-value">--</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">IP Address</div>
+            <div id="info-ip" class="info-value">--</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">APN</div>
+            <div id="info-apn" class="info-value">--</div>
+        </div>
+    </div>
+</div>
+
+<div class="fibocom-card">
+    <h3>LTE Band Locking</h3>
+    <div class="band-checkboxes">
+        <label class="band-label"><input type="checkbox" name="band" value="103"> B3 (1800MHz)</label>
+        <label class="band-label"><input type="checkbox" name="band" value="107"> B7 (2600MHz)</label>
+        <label class="band-label"><input type="checkbox" name="band" value="120"> B20 (800MHz)</label>
+    </div>
+    <button class="btn-apply" onclick="applyBands()">Apply Changes</button>
+</div>
+
+<div class="fibocom-card">
+    <h3>AT Command Terminal</h3>
+    <div id="terminal" class="terminal-window">Welcome to Fibocom Terminal...</div>
+    <div class="input-group">
+        <input type="text" id="at-input" placeholder="Enter AT command (e.g. AT+CGMM)" onkeydown="if(event.keyCode==13) sendAT()">
+        <button class="btn-apply" onclick="sendAT()">Send</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function updateStatus() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "network", "fibocom", "data")%>', null, function(x, data) {
+            if (data && data.csq) {
+                document.getElementById('csq-value').innerHTML = data.csq;
+                document.getElementById('active-bands').innerHTML = data.active_bands.length > 0 ? data.active_bands.join(', ') : "None";
+                
+                // Update Info Grid
+                document.getElementById('info-operator').innerHTML = data.operator || "Unknown";
+                document.getElementById('info-mode').innerHTML = data.mode || "N/A";
+                document.getElementById('info-ip').innerHTML = data.ip || "N/A";
+                document.getElementById('info-apn').innerHTML = data.apn || "N/A";
+
+                // Update signal ladder
+                let csq_val = parseInt(data.csq.split(',')[0]) || 0;
+                let bars = 0;
+                if (csq_val >= 25) bars = 5;
+                else if (csq_val >= 20) bars = 4;
+                else if (csq_val >= 15) bars = 3;
+                else if (csq_val >= 10) bars = 2;
+                else if (csq_val >= 5) bars = 1;
+                
+                let ladder = document.getElementById('signal-ladder');
+                let bar_divs = ladder.getElementsByClassName('bar');
+                for (let i = 0; i < bar_divs.length; i++) {
+                    if (i < bars) bar_divs[i].classList.add('active');
+                    else bar_divs[i].classList.remove('active');
+                }
+            }
+        });
+    }
+
+    function applyBands() {
+        let selected = [];
+        document.querySelectorAll('input[name="band"]:checked').forEach(cb => selected.push(cb.value));
+        if (selected.length === 0) {
+            alert("Please select at least one band");
+            return;
+        }
+        
+        XHR.get('<%=luci.dispatcher.build_url("admin", "network", "fibocom", "set_band")%>', { bands: selected.join(',') }, function(x, res) {
+            alert("Command sent: " + x.responseText);
+            updateStatus();
+        });
+    }
+
+    function sendAT() {
+        let input = document.getElementById('at-input');
+        let cmd = input.value;
+        if (!cmd) return;
+        
+        let term = document.getElementById('terminal');
+        term.innerHTML += "\n> " + cmd;
+        
+        XHR.get('<%=luci.dispatcher.build_url("admin", "network", "fibocom", "at_cmd")%>', { cmd: cmd }, function(x, res) {
+            term.innerHTML += "\n" + x.responseText;
+            term.scrollTop = term.scrollHeight;
+            input.value = "";
+        });
+    }
+
+    // Auto-refresh every 5 seconds
+    setInterval(updateStatus, 5000);
+    updateStatus();
+</script>
+
+<%+footer%>
