@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+USE_PROCD=1
+
+start_service() {
+    # Даем системе проинициализировать сеть (WAN)
+    sleep 5
+    logger -t shuka-boot "Auto-starting last active VPN profile..."
+    
+    # Запускаем через наш менеджер (команда start читает state.json)
+    /usr/bin/python3 /usr/bin/shuka_manager.py start &
+}
+
+stop_service() {
+    /usr/bin/python3 /usr/bin/shuka_manager.py stop
+}
