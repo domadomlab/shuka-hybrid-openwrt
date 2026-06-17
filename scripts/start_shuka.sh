@@ -30,13 +30,7 @@ GW=$(ip route show default | awk '/default/ {print $3}' | head -n1)
 DEV=$(ip route show default | awk '/default/ {print $5}' | head -n1)
 ENDPOINT=$(grep Endpoint $CONF | awk '{print $3}' | cut -d: -f1)
 
-if [ -z "$GW" ]; then
-    echo "ОШИБКА: Нет интернета (шлюза по умолчанию). VPN не может быть запущен."
-    ip link delete $IFACE 2>/dev/null
-    exit 1
-fi
-
-if [ -n "$ENDPOINT" ]; then
+if [ -n "$GW" ] && [ -n "$ENDPOINT" ]; then
     echo "Шлюз: $GW через $DEV, Сервер: $ENDPOINT"
     ip route add $ENDPOINT via $GW dev $DEV 2>/dev/null
 fi
