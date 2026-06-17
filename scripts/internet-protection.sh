@@ -34,9 +34,9 @@ aggressive_rescue() {
     
     # Удаляем маршруты к VPN эндпоинтам
     ip route show | grep via | while read -r line; do
-        # Если маршрут специфичный (не локалка и не дефолт), удаляем его
+        # Если маршрут к конкретному IP (нет маски /) и не дефолт - это эндпоинт VPN
         dest=$(echo "$line" | awk '{print $1}')
-        if [ "$dest" != "default" ] && [ "$dest" != "192.168.8.0/24" ] && [ "$dest" != "192.168.1.0/24" ]; then
+        if [ "$dest" != "default" ] && ! echo "$dest" | grep -q "/"; then
             ip route del $dest 2>/dev/null
         fi
     done
