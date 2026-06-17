@@ -1,0 +1,154 @@
+Небольшой сборник полезных АТ команд L860/850-GL.
+
+Выдаю в таком формате, чтобы удобно было копировать:
+ # 
+Посмотреть версию ПО. Показывает версию прошивки и зашитого вэндора:
+AT+GTPKGVER?
+
+Посмотреть IMEI
+AT+CGSN?
+
+Статус SIM карты
+at+cpin?
+
+Показывает наличие сим-карт в лотках
+AT+GTSIMINIT?
+
+Состояние готовности слотов SIM
+at@uicc:get_card_state()
+
+Активный слот SIM: 0-первый (prymary), 1-второй (secondary)
+AT+CSUS?
+
+Возможности SIM
+at@uicc:get_sim_capabilities()
+
+Тест SIM карт: primary и secondary
+at@uicc:testanysimprimary()
+at@uicc:testanysimsecondary()
+
+Проверка температуры
+AT+MTSM=1
+
+Переключение режимов работы модема. *В современных прошивках всего несколько активных режимов: 0,10 - NCM, 7 - MBIM (860 только по линии PCI), 11 - NCM (но с другими pid/vid - Intel). Не верите? Сами проверьте! Переключайте все режимы по очереди и смотрите логи системы, как и с какими портами модем представляется устройству.
+NCM
+at@nvm:cal_usbmode.num=0
+
+NCM
+at@nvm:cal_usbmode.num=10
+
+Сохранить выбранный режим
+at@store_nvm(cal_usbmode)
+
+Перезагрузка модема
+AT+CFUN=15
+
+Посмотреть включенные бэнды
+at+xact?
+
+Включить только определенный бэнд. Например b7 - будет 107, b20 - 120
+at+xact=2,,,10x
+
+Разблокировать все бэнды LTE
+at+xact=2,,,0
+
+Посмотреть активную агрегацию
+at+xlec?
+
+Посмотреть метрики. Вводятся две команды: первая разрешает вторую
+at@emac:enable_metric_config( )
+at@emac:ul_dl_modulation_metric_status( )
+
+Узнать, какой бэнд участвует в UL. При рабочей ULCA их будет две.
+at@errc:pcell_scell_ul_band_bw_info( )
+
+Узнать, на каких несущих работает режим MIMO
+at@errc:pcell_scell_mimoLayer_status( )
+
+Метрики антенн
+at@errc:pcell_scell_measurement_info( )
+
+Вывод доступных комбинаций агрегации, согласно выбранным бэндам *При включенной ULCA будут присутствовать комбинации типа: 7CC+BWCS-7, где главное - CC, означающие: пара смежных несущих в B7, а для аплинка - эти две несущих в B7 одновременно
+at@sic:ca_info(0)
+
+Информация по антенным портам (0) - краткая, (1) - развернутая
+at@xrf:get_antenna_port(1)
+
+Запрет любой агрегации
+at@sic:ca_disable(0)
+
+Восстановление возможности агрегации
+at@sic:ca_restore(0)
+
+По-идее, этой командой можно управлять самой комбинацией- в каком порядке будут идти несущие. Однако, эта команда только для второстепенных несущих.
+at@xrs:ca_config()??
+ca_config(ul_ca_enable,scell_band_1,scell_earfcn_1,scell_band_2,scell_earfcn_2,scell_band_3,scell_earfcn_3,scell_band_4,scell_earfcn_4,scell_mimo) [%d %u %u %u %u ... %u~0 %u~0 %u~0 %u~0 %qu~0] AL=PRODUCTION/test/sec
+Configure carrier aggregation for LTE.
+
+Вывод активных служб модема.
+at@sysmon:info_print()??
+info_print() [] AL=PRODUCTION/test/sec
+Print event collector table command
+
+С помощью данной команды можно включить или выключить службы. Например, Watchdog. По-идее, на Кинетике он нахер не нужен, т.к. оригинальный Кинетик сам перезагрузит модем. Но это можно сделать и средствами самого модема.
+at@sysmon:entity_enable()??
+entity_enable($entity_name , $enable) [%s[16] %d] AL=PRODUCTION/test/sec
+Enable or disable a Sysmon entity. Using a star '*' as entity name will proceed all of them.
+Examples:
+at@sysmon:entity_enable("Pow NK",1) -> will enable "Pow NK" entity.
+at@sysmon:entity_enable("*",0) -> will disable all entities.
+
+Данная команда выставляет значения для каждой из служб
+at@sysmon:set_supervisors_durations()??
+set_supervisors_durations($entity_name , $duration_for_supervisor) [%s[16] %d] AL=PRODUCTION/test/sec
+The command will set the supervisors durations
+use: at@sysmon:set_supervisors_durations("entity_name", Duration)
+entity_name valid_range(in ticks)
+IUI 1-7800
+Bottom Half 1-26000
+Watchdog 1-780000000
+Timer_CB_LPRT 1-52000
+Timer_CB_HPRT 1-520
+
+Покажет протокол, по которому подключен модем: USB 1.0/2.0/3.0
+at@usbmwtestfw:usb_get_enum_speed()
+
+Есть извращенцы, которые смотрят iptv мультикаст, используя lte трафик. Есть для них небольшой бонус. Вроде как, данная команда включает 256QAM для multicast трафика:
+at@nvm:dyn_cps.instance[0].lte_caps.dl_256qam_mbms_support=1
+at@nvm:store_nvm(dyn_cps)
+
+Переключение симок:
+второй слот
+at@nvm:dyn_cps_dssa_prsrv.msim_config.ps_pref_slot=1
+at@nvm:store_nvm(dyn_cps_dssa_prsrv)
+
+первый слот
+at@nvm:dyn_cps_dssa_prsrv.msim_config.ps_pref_slot=0
+at@nvm:store_nvm(dyn_cps_dssa_prsrv)
+
+*Работает не на всех прошивках! На новых версиях ПО, выше 18601...16.11(HP) и 18601...16.12(Lenovo) переключение не арбайтен. Исключение составляет 18601...16.48(HP)
+На более свежих прошивках смену сим слотов нашел nufrog
+
+
+Узнать PCI ERRFCH и уровень сигнала на всех несущих, участвующих в агрегации которые "слышит" модем:
+AT+RSRP?
+(PCI, EARFCN, уровень сигнала,…)
+
+Фиксация несущей частоты
+at@sic:freq_lock(0,3,band,1,EARFCN,PCI)
+где 0 - константа; 3- rat (LTE); Band - указывается либо 7, либо 107; 1 -разрешить / 0 запретить фиксацию; EARFCN и PCI указываются в десятичной системе счисления.
+После требуется перезапуск. Для Кинетика перезагрузка не нужна, достаточно передернуть соединение at+cfun=4
+at+cfun=15
+Модем перезагрузится и если все сделали правильно, подключится к оператору на той частоте, которую указали. Чтобы включить агрегацию (если она самостоятельно не подтянулась), нужно просто ввести команду выключения фиксации, больше ничего, перезагружать уже не надо.
+at@sic:freq_lock(0,3,band,0,EARFCN,PCI)
+*Не работает на KeenOS 3.9.x-4.0.x. Как починят- уберу.
+Похоже, не починят и нужно выложить костыль. Вводим команду для фиксации несущей и меняем состояние любого неиспользуемого бэнда на противоположное, т.е. если был включён, то выключаем и наоборот. Соединение перезапустится на выбранной несущей, бонусом подтянется агрегация. Не могу не отметить, что если симка установлена во втором слоте, то команда работает без вкл/выкл бэндов. У некоторых, даже без дополнительной команды at+cfun=4, просто через некоторое время. Так же сама подтягивается агрегация.
+
+Нужно, наверное, выложить саму команду, как она есть:
+at@sic:freq_lock()??
+freq_lock($sim_id $rat $band $inter_frequency_lock_enable $frequency $psc_pci) [%qu %qu %qu %qu %lu %hu] AL=PRODUCTION/test/sec
+Command to set the frequency lock configuration, which shall be used in UE to register to a PLMN particular to the frequency info provided by the user
+
+
+Узнать версию ID модема (hwid)
+at@hwid:ver_hwid_get_id(6)

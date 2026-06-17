@@ -2,42 +2,18 @@
     "luci-app-fibocom": {
         "description": "Grant access to Fibocom Modem management",
         "read": {
-            "cgi-io": [
-                "exec"
-            ],
-            "file": {
-                "/usr/bin/fibocom_modem.py": [
-                    "read"
-                ]
-            },
+            "cgi-io": [ "exec" ],
+            "file": { "/usr/bin/fibocom_modem.py": [ "read" ] },
             "luci": [
-                [
-                    "admin",
-                    "network",
-                    "fibocom"
-                ],
-                [
-                    "admin",
-                    "network",
-                    "fibocom",
-                    "data"
-                ],
-                [
-                    "admin",
-                    "network",
-                    "fibocom",
-                    "at_cmd"
-                ]
+                [ "admin", "network", "fibocom" ],
+                [ "admin", "network", "fibocom", "data" ],
+                [ "admin", "network", "fibocom", "at_cmd" ]
             ]
         },
         "write": {
             "luci": [
-                [
-                    "admin",
-                    "network",
-                    "fibocom",
-                    "set_band"
-                ]
+                [ "admin", "network", "fibocom", "set_band" ],
+                [ "admin", "network", "fibocom", "restore_ca" ]
             ]
         }
     }

@@ -1,0 +1,25 @@
+{
+    "luci-app-shuka": {
+        "description": "Grant access to Shuka VPN",
+        "read": {
+            "cgi-io": [ "exec" ],
+            "luci": [
+                [ "admin", "services" ],
+                [ "admin", "services", "shuka" ],
+                [ "admin", "services", "shuka", "data" ]
+            ]
+        },
+        "write": {
+            "luci": [
+                [ "admin", "services", "shuka", "sync" ],
+                [ "admin", "services", "shuka", "select" ],
+                [ "admin", "services", "shuka", "force_ping" ],
+                [ "admin", "services", "shuka", "start" ],
+                [ "admin", "services", "shuka", "stop" ],
+                [ "admin", "services", "shuka", "amnezia_upload" ],
+                [ "admin", "services", "shuka", "delete_amnezia" ],
+                [ "admin", "services", "shuka", "clear_sub" ]
+            ]
+        }
+    }
+}

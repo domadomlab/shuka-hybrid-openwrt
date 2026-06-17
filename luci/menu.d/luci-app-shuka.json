@@ -1,0 +1,46 @@
+{
+    "admin/services": {
+        "title": "Services",
+        "order": 40,
+        "action": {
+            "type": "firstchild"
+        }
+    },
+    "admin/services/shuka": {
+        "title": "Shuka VPN",
+        "order": 60,
+        "action": {
+            "type": "call",
+            "module": "luci.controller.shuka_hybrid",
+            "function": "action_gui"
+        }
+    },
+    "admin/services/shuka/sync": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_sync" }
+    },
+    "admin/services/shuka/data": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_data" }
+    },
+    "admin/services/shuka/select": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_select" }
+    },
+    "admin/services/shuka/force_ping": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_force_ping" }
+    },
+    "admin/services/shuka/start": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_start" }
+    },
+    "admin/services/shuka/stop": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_stop" }
+    },
+    "admin/services/shuka/amnezia_upload": {
+    ,
+    "admin/services/shuka/clear_sub": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_clear_sub" }
+    }
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_amnezia_upload" }
+    },
+    "admin/services/shuka/delete_amnezia": {
+        "action": { "type": "call", "module": "luci.controller.shuka_hybrid", "function": "action_delete_amnezia" }
+    }
+}

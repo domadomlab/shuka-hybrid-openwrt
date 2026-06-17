@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shuka Settings</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-info {
+            flex: 1;
+            padding-right: 1.5rem;
+        }
+
+        .setting-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Modern Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 34px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #94a3b8;
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+            background-color: white;
+        }
+        
+        input:disabled + .slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        input:checked ~ * .status-indicator, /* fallback */
+        .setting-item.active .status-indicator {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        /* Save Button */
+        .btn-save {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-save:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="settings-container">
+    <div class="header">
+        <h1>Shuka Control Panel</h1>
+        <p>Управление автоматизацией и системными службами</p>
+    </div>
+
+    <!-- Service 1: Autostart -->
+    <div class="setting-item" id="item-boot">
+        <div class="setting-info">
+            <div class="setting-name">
+                <span class="status-indicator"></span>
+                Автозапуск (shuka-boot)
+            </div>
+            <div class="setting-desc">
+                Автоматически восстанавливает последний активный профиль VPN при перезагрузке роутера.
+            </div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="toggle-boot" checked onchange="updateUI('item-boot', this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Service 2: Modem Hotplug -->
+    <div class="setting-item" id="item-hotplug">
+        <div class="setting-info">
+            <div class="setting-name">
+                <span class="status-indicator"></span>
+                Отслеживание Модема
+            </div>
+            <div class="setting-desc">
+                Интеллектуальный Hotplug. Запускает VPN только при успешном подключении USB-модема к сети.
+            </div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="toggle-hotplug" checked onchange="updateUI('item-hotplug', this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Service 3: Internet Protection -->
+    <div class="setting-item" id="item-watchdog">
+        <div class="setting-info">
+            <div class="setting-name">
+                <span class="status-indicator"></span>
+                Internet Protection Watchdog
+            </div>
+            <div class="setting-desc">
+                Агрессивная защита. Восстанавливает прямой доступ в интернет при обрыве связи с VPN-сервером.
+            </div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="toggle-watchdog" checked onchange="updateUI('item-watchdog', this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Service 4: Safe DNS -->
+    <div class="setting-item" id="item-dns">
+        <div class="setting-info">
+            <div class="setting-name">
+                <span class="status-indicator"></span>
+                Safe DNS (Обход блокировок)
+            </div>
+            <div class="setting-desc">
+                Направляет DNS-запросы через Google/Cloudflare (DoH), минуя подмену адресов провайдером.
+            </div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="toggle-dns" onchange="updateUI('item-dns', this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <button class="btn-save" onclick="saveSettings()">Применить изменения</button>
+</div>
+
+<script>
+    // Инициализация UI статусов
+    function initUI() {
+        ['boot', 'hotplug', 'watchdog', 'dns'].forEach(id => {
+            const isChecked = document.getElementById('toggle-' + id).checked;
+            updateUI('item-' + id, isChecked);
+        });
+    }
+
+    // Обновление стилей (цвет индикатора) при переключении
+    function updateUI(itemId, isChecked) {
+        const item = document.getElementById(itemId);
+        if (isChecked) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    }
+
+    // Имитация сохранения настроек (AJAX запрос к LuCI)
+    function saveSettings() {
+        const btn = document.querySelector('.btn-save');
+        const originalText = btn.innerText;
+        
+        btn.innerText = 'Сохранение...';
+        btn.style.opacity = '0.8';
+
+        // Собираем состояния
+        const state = {
+            boot: document.getElementById('toggle-boot').checked,
+            hotplug: document.getElementById('toggle-hotplug').checked,
+            watchdog: document.getElementById('toggle-watchdog').checked,
+            dns: document.getElementById('toggle-dns').checked
+        };
+
+        // Имитация задержки сети
+        setTimeout(() => {
+            console.log('Отправка в LuCI backend:', state);
+            btn.style.background = 'var(--success)';
+            btn.innerText = 'Сохранено!';
+            
+            setTimeout(() => {
+                btn.style.background = 'var(--accent)';
+                btn.innerText = originalText;
+                btn.style.opacity = '1';
+            }, 2000);
+        }, 800);
+    }
+
+    // Запускаем инициализацию при загрузке
+    window.onload = initUI;
+</script>
+
+</body>
+</html>

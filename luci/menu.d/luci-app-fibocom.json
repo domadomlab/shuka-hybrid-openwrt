@@ -1,6 +1,6 @@
 {
     "admin/network/fibocom": {
-        "title": "Fibocom Modem",
+        "title": "Fibocom L860-GL",
         "order": 99,
         "action": {
             "type": "template",
@@ -19,6 +19,13 @@
             "type": "call",
             "module": "luci.controller.fibocom",
             "function": "action_set_band"
+        }
+    },
+    "admin/network/fibocom/restore_ca": {
+        "action": {
+            "type": "call",
+            "module": "luci.controller.fibocom",
+            "function": "action_restore_ca"
         }
     },
     "admin/network/fibocom/at_cmd": {
